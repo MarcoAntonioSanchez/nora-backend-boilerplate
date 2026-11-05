@@ -1,6 +1,6 @@
 {
   "name": "nora-backend-boilerplate",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Node.js and Fastify based. Think of it as a reusable boilerplate for scalable, modular REST API projects powered by Microsoft SQL Server",
   "scripts": {
     "lint": "eslint .",

@@ -2,7 +2,11 @@ import Fastify from 'fastify';
 
 import { closeDatabase, connectDatabase } from './config/database.js';
 
-import healthRoutes from './routes/health.js';
+import { registerErrorHandler } from './plugins/error-handler.js';
+
+import healthRoutes from './modules/health/routes/health.routes.js';
+
+import usersRoutes from './modules/users/routes/users.routes.js';
 
 /**
  * Creates and configures the NORA application.
@@ -15,7 +19,14 @@ import healthRoutes from './routes/health.js';
 export function buildApp() {
   const app = Fastify({
     logger: true,
+    ajv: {
+      customOptions: {
+        removeAdditional: false,
+      },
+    },
   });
+  // Register the global application error handler.
+  registerErrorHandler(app);
 
   // Establish the database connection before the application starts.
   app.addHook('onReady', async () => {
@@ -27,6 +38,9 @@ export function buildApp() {
 
   // Register application health check routes.
   app.register(healthRoutes);
+
+  // Register user management routes.
+  app.register(usersRoutes);
 
   return app;
 }
