@@ -4,9 +4,13 @@ import { closeDatabase, connectDatabase } from './config/database.js';
 
 import { registerErrorHandler } from './plugins/error-handler.js';
 
+import authenticationPlugin from './plugins/authentication.js';
+
 import healthRoutes from './modules/health/routes/health.routes.js';
 
 import usersRoutes from './modules/users/routes/users.routes.js';
+
+import authRoutes from './modules/auth/routes/auth.routes.js';
 
 /**
  * Creates and configures the NORA application.
@@ -28,6 +32,9 @@ export function buildApp() {
   // Register the global application error handler.
   registerErrorHandler(app);
 
+  // Register JWT authentication support.
+  app.register(authenticationPlugin);
+
   // Establish the database connection before the application starts.
   app.addHook('onReady', async () => {
     await connectDatabase();
@@ -41,6 +48,9 @@ export function buildApp() {
 
   // Register user management routes.
   app.register(usersRoutes);
+
+  // Register authentication routes.
+  app.register(authRoutes);
 
   return app;
 }

@@ -85,6 +85,7 @@ The application validates these values during startup and rejects invalid config
 | `pnpm lint:fix`     | Automatically fixes supported ESLint issues              |
 | `pnpm format`       | Formats project files with Prettier                      |
 | `pnpm format:check` | Checks formatting without modifying files                |
+| `pnpm test`         | Runs the automated test suite with Node.js Test Runner   |
 
 ## Architecture
 
@@ -179,22 +180,22 @@ CORS is not an authentication mechanism and does not prevent direct HTTP request
 
 ## Project Status
 
-**Current milestone:** Stage 01 - Foundation
+**Current milestone:** Stage 04 - Authentication
 
-**Target version:** `v0.0.1`
+**Target version:** `v0.0.4`
 
-The initial foundation includes:
+Completed milestones:
 
-- Node.js and pnpm project configuration.
-- Fastify 5 application initialization.
-- Environment variable validation.
-- Separate application and server entry points.
-- ESLint and Prettier configuration.
-- Reproducible dependency installation.
+- Stage 01 - Foundation (`v0.0.1`)
+- Stage 02 - Database (`v0.0.2`)
+- Stage 03 - API Architecture (`v0.0.3`)
 
-Database connectivity, API modules, authentication, security hardening, integration and production deployment will be implemented in their respective roadmap stages.
+Current implementation:
 
-## License
+- Technical account authentication using Argon2id.
+- JWT access token generation and verification.
+- Protected API endpoints.
+- Authentication request validation using JSON Schema.
+- Automated unit and HTTP integration tests.
 
-This project is licensed under the ISC License.
-Copyright (c) 2026 Marco Antonio Sánchez Pérez (Raven D. Milosh)
+The current authentication implementation is undergoing final validation before its release.

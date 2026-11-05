@@ -19,6 +19,12 @@ const dbPassword = process.env.DB_PASSWORD;
 const dbEncryptValue = process.env.DB_ENCRYPT ?? 'true';
 const dbTrustServerCertificateValue = process.env.DB_TRUST_SERVER_CERTIFICATE ?? 'false';
 
+// Authentication environment variables.
+const authUsername = process.env.AUTH_USERNAME;
+const authPasswordHash = process.env.AUTH_PASSWORD_HASH;
+const jwtSecret = process.env.JWT_SECRET;
+const jwtExpiresIn = process.env.JWT_EXPIRES_IN ?? '15m';
+
 // Validate NODE_ENV.
 if (!['development', 'production', 'test'].includes(nodeEnv)) {
   throw new Error(`Invalid NODE_ENV: "${nodeEnv}". Expected development, production or test.`);
@@ -49,6 +55,32 @@ for (const [name, value] of Object.entries({
 // Validate DB_PORT.
 if (!/^\d+$/.test(dbPortValue) || !Number.isInteger(dbPort) || dbPort < 1 || dbPort > 65535) {
   throw new Error('DB_PORT must be an integer between 1 and 65535.');
+}
+
+// Validate authentication environment variables.
+for (const [name, value] of Object.entries({
+  AUTH_USERNAME: authUsername,
+  AUTH_PASSWORD_HASH: authPasswordHash,
+  JWT_SECRET: jwtSecret,
+})) {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`${name} must be a non-empty string.`);
+  }
+}
+
+// Validate Argon2id password hash.
+if (!authPasswordHash.startsWith('$argon2id$')) {
+  throw new Error('AUTH_PASSWORD_HASH must be a valid Argon2id hash.');
+}
+
+// Validate JWT secret strength.
+if (jwtSecret.length < 32) {
+  throw new Error('JWT_SECRET must contain at least 32 characters.');
+}
+
+// Validate JWT expiration format.
+if (!/^\d+(s|m|h|d)$/.test(jwtExpiresIn)) {
+  throw new Error('JWT_EXPIRES_IN must use a valid duration (e.g. 15m, 1h or 7d).');
 }
 
 // Validate database TLS boolean settings.
@@ -83,5 +115,11 @@ export const env = Object.freeze({
       encrypt: dbEncrypt,
       trustServerCertificate: dbTrustServerCertificate,
     }),
+  }),
+  auth: Object.freeze({
+    username: authUsername,
+    passwordHash: authPasswordHash,
+    jwtSecret,
+    jwtExpiresIn,
   }),
 });

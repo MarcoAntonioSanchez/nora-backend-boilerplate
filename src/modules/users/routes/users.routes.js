@@ -11,6 +11,7 @@ export default async function usersRoutes(app) {
     '/users',
     {
       schema: createUserSchema,
+      preHandler: [app.authenticate],
     },
     createUser,
   );
