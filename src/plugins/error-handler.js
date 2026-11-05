@@ -32,7 +32,9 @@ export function registerErrorHandler(app) {
                 ? 'Forbidden'
                 : statusCode === 404
                   ? 'Not Found'
-                  : 'Client Error',
+                  : statusCode === 409
+                    ? 'Conflict'
+                    : 'Client Error',
       message: statusCode >= 500 ? 'An unexpected error occurred.' : error.message,
     });
   });

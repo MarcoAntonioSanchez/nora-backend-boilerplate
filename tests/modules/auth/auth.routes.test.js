@@ -20,12 +20,10 @@ Object.assign(process.env, {
 });
 
 // Import application modules after configuring the test environment.
-const [{ default: authenticationPlugin }, { default: authRoutes }, { default: usersRoutes }] =
-  await Promise.all([
-    import('../../../src/plugins/authentication.js'),
-    import('../../../src/modules/auth/routes/auth.routes.js'),
-    import('../../../src/modules/users/routes/users.routes.js'),
-  ]);
+const [{ default: authenticationPlugin }, { default: authRoutes }] = await Promise.all([
+  import('../../../src/plugins/authentication.js'),
+  import('../../../src/modules/auth/routes/auth.routes.js'),
+]);
 
 // Build an isolated Fastify application without a database connection.
 const app = Fastify({
@@ -34,7 +32,15 @@ const app = Fastify({
 
 await app.register(authenticationPlugin);
 await app.register(authRoutes);
-await app.register(usersRoutes);
+app.post(
+  '/protected-test',
+  {
+    preHandler: [app.authenticate],
+  },
+  async (request) => ({
+    data: request.body,
+  }),
+);
 await app.ready();
 
 // Close the test application after all tests finish.
@@ -82,7 +88,7 @@ test('rejects invalid credentials through the HTTP login endpoint', async () => 
 test('rejects requests without an access token', async () => {
   const response = await app.inject({
     method: 'POST',
-    url: '/users',
+    url: '/protected-test',
     payload: {
       name: 'Test User',
       email: 'test@example.com',
@@ -96,7 +102,7 @@ test('rejects requests without an access token', async () => {
 test('rejects requests with an invalid access token', async () => {
   const response = await app.inject({
     method: 'POST',
-    url: '/users',
+    url: '/protected-test',
     headers: {
       authorization: 'Bearer invalid.jwt.token',
     },
@@ -118,7 +124,7 @@ test('allows requests with a valid access token', async () => {
 
   const response = await app.inject({
     method: 'POST',
-    url: '/users',
+    url: '/protected-test',
     headers: {
       authorization: `Bearer ${accessToken}`,
     },
