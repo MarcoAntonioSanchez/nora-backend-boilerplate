@@ -6,6 +6,10 @@ import { registerErrorHandler } from './plugins/error-handler.js';
 
 import authenticationPlugin from './plugins/authentication.js';
 
+import corsPlugin from './plugins/cors.js';
+
+import rateLimitPlugin from './plugins/rate-limit.js';
+
 import healthRoutes from './modules/health/routes/health.routes.js';
 
 import usersRoutes from './modules/users/routes/users.routes.js';
@@ -31,6 +35,12 @@ export function buildApp() {
   });
   // Register the global application error handler.
   registerErrorHandler(app);
+
+  // Register global CORS configuration.
+  app.register(corsPlugin);
+
+  // Register global rate limiting.
+  app.register(rateLimitPlugin);
 
   // Register JWT authentication support.
   app.register(authenticationPlugin);

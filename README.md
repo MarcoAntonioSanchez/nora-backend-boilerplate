@@ -67,13 +67,51 @@ http://localhost:3000
 
 NORA reads its runtime configuration from environment variables.
 
+Copy `.env.example` to `.env` and configure the required values before starting the application.
+
+### Application
+
 | Variable | Default     | Description                                              |
 | -------- | ----------- | -------------------------------------------------------- |
 | NODE_ENV | development | Application environment: development, production or test |
 | HOST     | 0.0.0.0     | Network interface used by the HTTP server                |
 | PORT     | 3000        | HTTP server port                                         |
 
+### Microsoft SQL Server
+
+| Variable                    | Default  | Description                                                           |
+| --------------------------- | -------- | --------------------------------------------------------------------- |
+| DB_SERVER                   | Required | SQL Server hostname or IP address                                     |
+| DB_PORT                     | 1433     | SQL Server TCP port                                                   |
+| DB_NAME                     | Required | Database name                                                         |
+| DB_USER                     | Required | Database username                                                     |
+| DB_PASSWORD                 | Required | Database password                                                     |
+| DB_ENCRYPT                  | true     | Enables encrypted database connections                                |
+| DB_TRUST_SERVER_CERTIFICATE | false    | Controls whether the server certificate is trusted without validation |
+
+### Authentication
+
+| Variable           | Default  | Description                           |
+| ------------------ | -------- | ------------------------------------- |
+| AUTH_USERNAME      | Required | Technical account username            |
+| AUTH_PASSWORD_HASH | Required | Argon2id password hash                |
+| JWT_SECRET         | Required | Secret used to sign JWT access tokens |
+| JWT_EXPIRES_IN     | 15m      | JWT access token expiration time      |
+
+### CORS
+
+| Variable     | Default                              | Description                                      |
+| ------------ | ------------------------------------ | ------------------------------------------------ |
+| CORS_ORIGINS | http://localhost:4321 in development | Comma-separated list of allowed frontend origins |
+
 The application validates these values during startup and rejects invalid configurations.
+
+Production requirements:
+
+- `CORS_ORIGINS` must contain explicitly configured HTTPS origins.
+- `DB_ENCRYPT` must be `true`.
+- `DB_TRUST_SERVER_CERTIFICATE` must be `false`.
+- Application credentials and secrets must never be committed to the repository.
 
 ## Available Scripts
 
@@ -164,7 +202,7 @@ Client applications must not expose permanent credentials or secrets in browser-
 
 The initial production environment is designed around Windows Server.
 
-Key infrastructure principles:
+### Infrastructure
 
 - Node.js runs natively on Windows Server.
 - Microsoft SQL Server remains isolated from public Internet access.
@@ -172,23 +210,47 @@ Key infrastructure principles:
 - Cloudflare Tunnel provides the external publication path for the API.
 - HTTPS is used for external communication.
 - Database credentials and application secrets remain outside the repository.
-- SQL operations use parameterized queries.
-- Database accounts follow the principle of least privilege.
-- CORS and rate limiting provide additional application-level protections.
 
-CORS is not an authentication mechanism and does not prevent direct HTTP requests from tools or other servers.
+### Application Security
+
+- CORS allows only explicitly configured frontend origins.
+- Production CORS origins must use HTTPS.
+- CORS does not provide authentication or prevent direct HTTP requests from external tools.
+- Global rate limiting restricts clients to 100 requests per 15-minute window.
+- Authentication endpoints restrict login attempts to 5 requests per 15-minute window.
+- JWT protects endpoints that require authentication.
+- Argon2id is used for password verification.
+- Request validation uses Fastify JSON Schema.
+
+### Database Security
+
+- SQL Server connections use encrypted communication.
+- Production requires certificate validation.
+- Production database connections must use `DB_ENCRYPT=true` and `DB_TRUST_SERVER_CERTIFICATE=false`.
+- SQL operations must use parameterized queries.
+- Database accounts must follow the principle of least privilege.
+- SQL Server must not be exposed directly to the public Internet.
+
+### Reverse Proxy Considerations
+
+When deploying behind Cloudflare Tunnel, Fastify proxy trust settings must be explicitly configured according to the trusted proxy connection.
+
+Unrestricted proxy trust must not be enabled because client IP identification affects rate limiting and request metadata.
+
+The production proxy configuration will be finalized during deployment.
 
 ## Project Status
 
-**Current milestone:** Stage 04 - Authentication
+**Current milestone:** Stage 05 - Security
 
-**Target version:** `v0.0.4`
+**Target version:** `v0.0.5`
 
 Completed milestones:
 
 - Stage 01 - Foundation (`v0.0.1`)
 - Stage 02 - Database (`v0.0.2`)
 - Stage 03 - API Architecture (`v0.0.3`)
+- Stage 04 - Authentication (`v0.0.4`)
 
 Current implementation:
 
@@ -196,6 +258,15 @@ Current implementation:
 - JWT access token generation and verification.
 - Protected API endpoints.
 - Authentication request validation using JSON Schema.
-- Automated unit and HTTP integration tests.
+- Explicit CORS origin configuration.
+- Production HTTPS origin enforcement.
+- Global API rate limiting.
+- Login-specific rate limiting.
+- Production database TLS enforcement.
+- Automated configuration, authentication, CORS and rate limiting tests.
 
-The current authentication implementation is undergoing final validation before its release.
+Pending security work:
+
+- Verify and apply least-privilege SQL Server permissions as database objects are introduced.
+- Finalize trusted proxy configuration during Cloudflare Tunnel deployment.
+- Complete security validation before the `v0.0.5` release.

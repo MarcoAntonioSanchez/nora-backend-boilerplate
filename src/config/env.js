@@ -25,6 +25,10 @@ const authPasswordHash = process.env.AUTH_PASSWORD_HASH;
 const jwtSecret = process.env.JWT_SECRET;
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN ?? '15m';
 
+// CORS environment variables.
+const corsOriginsValue =
+  process.env.CORS_ORIGINS ?? (nodeEnv === 'production' ? '' : 'http://localhost:4321');
+
 // Validate NODE_ENV.
 if (!['development', 'production', 'test'].includes(nodeEnv)) {
   throw new Error(`Invalid NODE_ENV: "${nodeEnv}". Expected development, production or test.`);
@@ -83,6 +87,32 @@ if (!/^\d+(s|m|h|d)$/.test(jwtExpiresIn)) {
   throw new Error('JWT_EXPIRES_IN must use a valid duration (e.g. 15m, 1h or 7d).');
 }
 
+// Validate CORS origins.
+if (corsOriginsValue.trim().length === 0) {
+  throw new Error('CORS_ORIGINS must contain at least one allowed origin.');
+}
+
+const corsOrigins = corsOriginsValue.split(',').map((origin) => origin.trim());
+
+for (const origin of corsOrigins) {
+  let parsedOrigin;
+
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    throw new Error(`Invalid CORS origin: "${origin}".`);
+  }
+
+  if (!['http:', 'https:'].includes(parsedOrigin.protocol) || parsedOrigin.origin !== origin) {
+    throw new Error(`Invalid CORS origin: "${origin}".`);
+  }
+
+  // Require HTTPS origins in production.
+  if (nodeEnv === 'production' && parsedOrigin.protocol !== 'https:') {
+    throw new Error(`CORS origin must use HTTPS in production: "${origin}".`);
+  }
+}
+
 // Validate database TLS boolean settings.
 function parseBoolean(name, value) {
   if (value !== 'true' && value !== 'false') {
@@ -97,6 +127,17 @@ const dbTrustServerCertificate = parseBoolean(
   'DB_TRUST_SERVER_CERTIFICATE',
   dbTrustServerCertificateValue,
 );
+
+// Enforce secure database TLS configuration in production.
+if (nodeEnv === 'production') {
+  if (!dbEncrypt) {
+    throw new Error('DB_ENCRYPT must be true in production.');
+  }
+
+  if (dbTrustServerCertificate) {
+    throw new Error('DB_TRUST_SERVER_CERTIFICATE must be false in production.');
+  }
+}
 
 /**
  * Immutable application configuration.
@@ -121,5 +162,8 @@ export const env = Object.freeze({
     passwordHash: authPasswordHash,
     jwtSecret,
     jwtExpiresIn,
+  }),
+  cors: Object.freeze({
+    origins: Object.freeze(corsOrigins),
   }),
 });

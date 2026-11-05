@@ -12,6 +12,12 @@ export default async function authRoutes(app) {
     '/auth/login',
     {
       schema: loginSchema,
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: '15 minutes',
+        },
+      },
     },
     loginController,
   );
