@@ -1,5 +1,7 @@
 import Fastify from 'fastify';
 
+import { env } from './config/env.js';
+
 import { closeDatabase, connectDatabase } from './config/database.js';
 
 import { registerErrorHandler } from './plugins/error-handler.js';
@@ -9,6 +11,8 @@ import authenticationPlugin from './plugins/authentication.js';
 import corsPlugin from './plugins/cors.js';
 
 import rateLimitPlugin from './plugins/rate-limit.js';
+
+import swaggerPlugin from './plugins/swagger.js';
 
 import healthRoutes from './modules/health/routes/health.routes.js';
 
@@ -24,7 +28,7 @@ import authRoutes from './modules/auth/routes/auth.routes.js';
  *
  * @returns {import('fastify').FastifyInstance}
  */
-export function buildApp() {
+export function buildApp({ connectToDatabase: connectToDatabaseFn = connectDatabase } = {}) {
   const app = Fastify({
     logger: true,
     ajv: {
@@ -45,9 +49,14 @@ export function buildApp() {
   // Register JWT authentication support.
   app.register(authenticationPlugin);
 
+  // Register API documentation outside production.
+  if (env.nodeEnv !== 'production') {
+    app.register(swaggerPlugin);
+  }
+
   // Establish the database connection before the application starts.
   app.addHook('onReady', async () => {
-    await connectDatabase();
+    await connectToDatabaseFn();
   });
 
   // Close the database connection when the application shuts down.

@@ -51,6 +51,16 @@ Install dependencies:
 pnpm install --frozen-lockfile
 ```
 
+Copy the example environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configure the required application, database and authentication variables in `.env` before starting the server.
+
+Never commit `.env` or expose its secrets.
+
 Start the development server:
 
 ```bash
@@ -79,15 +89,15 @@ Copy `.env.example` to `.env` and configure the required values before starting 
 
 ### Microsoft SQL Server
 
-| Variable                    | Default  | Description                                                           |
-| --------------------------- | -------- | --------------------------------------------------------------------- |
-| DB_SERVER                   | Required | SQL Server hostname or IP address                                     |
-| DB_PORT                     | 1433     | SQL Server TCP port                                                   |
-| DB_NAME                     | Required | Database name                                                         |
-| DB_USER                     | Required | Database username                                                     |
-| DB_PASSWORD                 | Required | Database password                                                     |
-| DB_ENCRYPT                  | true     | Enables encrypted database connections                                |
-| DB_TRUST_SERVER_CERTIFICATE | false    | Controls whether the server certificate is trusted without validation |
+| Variable                    | Default  | Description                                                                                                                   |
+| --------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| DB_SERVER                   | Required | SQL Server hostname or IP address                                                                                             |
+| DB_PORT                     | 1433     | SQL Server TCP port                                                                                                           |
+| DB_NAME                     | Required | Database name                                                                                                                 |
+| DB_USER                     | Required | Database username                                                                                                             |
+| DB_PASSWORD                 | Required | Database password                                                                                                             |
+| DB_ENCRYPT                  | true     | Enables encrypted database connections                                                                                        |
+| DB_TRUST_SERVER_CERTIFICATE | false    | Allows trusting the SQL Server certificate without validation. Use `true` only in development with a self-signed certificate. |
 
 ### Authentication
 
@@ -124,6 +134,27 @@ Production requirements:
 | `pnpm format`       | Formats project files with Prettier                      |
 | `pnpm format:check` | Checks formatting without modifying files                |
 | `pnpm test`         | Runs the automated test suite with Node.js Test Runner   |
+
+## API Documentation
+
+NORA provides interactive API documentation through Swagger UI.
+
+When the development server is running, access:
+
+| Resource     | URL                                      |
+| ------------ | ---------------------------------------- |
+| Swagger UI   | http://localhost:3000/documentation      |
+| OpenAPI JSON | http://localhost:3000/documentation/json |
+
+Swagger UI and the OpenAPI JSON endpoint are disabled in production.
+
+The API currently exposes the following endpoints:
+
+| Method | Endpoint      | Authentication | Description                                          |
+| ------ | ------------- | -------------- | ---------------------------------------------------- |
+| GET    | `/health`     | Public         | Checks application and database availability         |
+| POST   | `/auth/login` | Public         | Authenticates the technical account and issues a JWT |
+| POST   | `/users`      | Bearer JWT     | Creates a user record                                |
 
 ## Architecture
 
@@ -171,15 +202,15 @@ NORA development is organized into seven incremental stages.
 
 Each completed stage receives its own patch release, preserving the project's implementation history.
 
-| Stage | Name             | Version | Scope                                                                                                       |
-| ----- | ---------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| 01    | Foundation       | v0.0.1  | Project initialization, Fastify, environment configuration, application structure, ESLint and Prettier      |
-| 02    | Database         | v0.0.2  | SQL Server connectivity, connection pool, database configuration, error handling and database health checks |
-| 03    | API Architecture | v0.0.3  | Modular structure, routes, controllers, services, repositories, schemas and centralized error handling      |
-| 04    | Authentication   | v0.0.4  | Technical user authentication, credentials management, JWT and protected endpoints                          |
-| 05    | Security         | v0.0.5  | CORS, rate limiting, secure SQL queries, HTTPS deployment considerations and database permissions           |
-| 06    | Integration      | v0.0.6  | Demonstration CRUD endpoints, API testing, VTAV integration and local/remote database validation            |
-| 07    | Release          | v0.0.7  | Automated tests, documentation, Swagger/OpenAPI, Windows Server deployment and Cloudflare Tunnel            |
+| Stage | Name             | Version | Scope                                                                                                            |
+| ----- | ---------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| 01    | Foundation       | v0.0.1  | Project initialization, Fastify, environment configuration, application structure, ESLint and Prettier           |
+| 02    | Database         | v0.0.2  | SQL Server connectivity, connection pool, database configuration, error handling and database health checks      |
+| 03    | API Architecture | v0.0.3  | Modular structure, routes, controllers, services, repositories, schemas and centralized error handling           |
+| 04    | Authentication   | v0.0.4  | Technical user authentication, credentials management, JWT and protected endpoints                               |
+| 05    | Security         | v0.0.5  | CORS, rate limiting, secure SQL queries, HTTPS deployment considerations and database permissions                |
+| 06    | Integration      | v0.0.6  | SQL Server integration, user creation endpoint, API testing, least-privilege permissions and database validation |
+| 07    | Release          | v0.0.7  | Automated tests, documentation, Swagger/OpenAPI, Windows Server deployment and Cloudflare Tunnel                 |
 
 ### Versioning Strategy
 
@@ -241,9 +272,11 @@ The production proxy configuration will be finalized during deployment.
 
 ## Project Status
 
-**Current milestone:** Stage 05 - Security
+**Current milestone:** Stage 07 - Release
 
-**Target version:** `v0.0.5`
+**Target version:** `v0.0.7`
+
+**Functional release:** `v0.1.0`
 
 Completed milestones:
 
@@ -251,22 +284,31 @@ Completed milestones:
 - Stage 02 - Database (`v0.0.2`)
 - Stage 03 - API Architecture (`v0.0.3`)
 - Stage 04 - Authentication (`v0.0.4`)
+- Stage 05 - Security (`v0.0.5`)
+- Stage 06 - Integration (`v0.0.6`)
 
 Current implementation:
 
+- Modular Monolith architecture using Fastify.
+- Microsoft SQL Server connection pool.
 - Technical account authentication using Argon2id.
 - JWT access token generation and verification.
-- Protected API endpoints.
-- Authentication request validation using JSON Schema.
+- Protected user creation endpoint with SQL Server persistence.
+- Duplicate email detection and conflict handling.
 - Explicit CORS origin configuration.
-- Production HTTPS origin enforcement.
-- Global API rate limiting.
-- Login-specific rate limiting.
+- Global and authentication-specific rate limiting.
 - Production database TLS enforcement.
-- Automated configuration, authentication, CORS and rate limiting tests.
+- SQL Server least-privilege permissions.
+- Centralized HTTP error handling.
+- OpenAPI 3.0.3 documentation and Swagger UI.
+- Documented request and response schemas for all implemented endpoints.
+- Automated test suite covering configuration, authentication, users, CORS and rate limiting.
 
-Pending security work:
+Pending release work:
 
-- Verify and apply least-privilege SQL Server permissions as database objects are introduced.
-- Finalize trusted proxy configuration during Cloudflare Tunnel deployment.
-- Complete security validation before the `v0.0.5` release.
+- Complete README and deployment documentation.
+- Prepare and validate Windows Server deployment.
+- Configure Cloudflare Tunnel.
+- Finalize trusted proxy configuration.
+- Perform production environment validation.
+- Complete release checks before publishing `v0.0.7` and preparing `v0.1.0`.

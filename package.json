@@ -1,6 +1,7 @@
 {
   "name": "nora-backend-boilerplate",
-  "version": "0.0.3",
+  "version": "0.0.7",
+  "author": "Marco Antonio Sánchez Pérez (Raven D. Milosh)",
   "description": "Node.js and Fastify based. Think of it as a reusable boilerplate for scalable, modular REST API projects powered by Microsoft SQL Server",
   "scripts": {
     "lint": "eslint .",
@@ -11,8 +12,17 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nodejs",
+    "fastify",
+    "rest-api",
+    "backend",
+    "boilerplate",
+    "microsoft-sql-server",
+    "modular-monolith",
+    "jwt",
+    "pnpm"
+  ],
   "license": "ISC",
   "devEngines": {
     "packageManager": {
@@ -27,6 +37,8 @@
     "@fastify/cors": "^11.4.0",
     "@fastify/jwt": "^10.2.7",
     "@fastify/rate-limit": "^11.2.2",
+    "@fastify/swagger": "9.9.3",
+    "@fastify/swagger-ui": "5.2.6",
     "argon2": "^0.45.2",
     "dotenv": "^18.0.9",
     "fastify": "^5.12.8",
