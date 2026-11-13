@@ -31,6 +31,7 @@ import authRoutes from './modules/auth/routes/auth.routes.js';
 export function buildApp({ connectToDatabase: connectToDatabaseFn = connectDatabase } = {}) {
   const app = Fastify({
     logger: true,
+    trustProxy: '127.0.0.1',
     ajv: {
       customOptions: {
         removeAdditional: false,
