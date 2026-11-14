@@ -8,6 +8,9 @@ import Fastify from 'fastify';
 const testPassword = 'NORA-test-password';
 const testPasswordHash = await argon2.hash(testPassword);
 
+const individualPassword = 'NORA-admin-test-password';
+const individualPasswordHash = await argon2.hash(individualPassword);
+
 Object.assign(process.env, {
   NODE_ENV: 'test',
   DB_SERVER: 'localhost',
@@ -29,6 +32,33 @@ const [{ default: authenticationPlugin }, { default: authRoutes }] = await Promi
 const app = Fastify({
   logger: false,
 });
+
+// Provide a mock database for individual account authentication.
+const mockDatabase = {
+  request() {
+    return {
+      input() {
+        return this;
+      },
+      async query() {
+        return {
+          recordset: [
+            {
+              id: 1,
+              username: 'raven.admin',
+              displayName: 'Raven',
+              passwordHash: individualPasswordHash,
+              role: 'admin',
+              isActive: true,
+            },
+          ],
+        };
+      },
+    };
+  },
+};
+
+app.decorate('authDatabase', mockDatabase);
 
 await app.register(authenticationPlugin);
 await app.register(authRoutes);
@@ -66,6 +96,35 @@ test('authenticates through the HTTP login endpoint', async () => {
   assert.equal(body.status, 'success');
   assert.equal(body.data.tokenType, 'Bearer');
   assert.equal(body.data.expiresIn, '15m');
+  assert.equal(typeof body.data.accessToken, 'string');
+});
+
+// Individual user login.
+test('authenticates an individual admin account through the HTTP login endpoint', async () => {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/auth/login',
+    payload: {
+      username: 'RAVEN.ADMIN',
+      password: individualPassword,
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+
+  const body = response.json();
+
+  assert.equal(body.status, 'success');
+  assert.equal(body.data.tokenType, 'Bearer');
+  assert.equal(body.data.expiresIn, '15m');
+
+  assert.deepEqual(body.data.user, {
+    id: 1,
+    username: 'raven.admin',
+    displayName: 'Raven',
+    role: 'admin',
+  });
+
   assert.equal(typeof body.data.accessToken, 'string');
 });
 

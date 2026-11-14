@@ -11,7 +11,7 @@ export default async function usersRoutes(app) {
     '/users',
     {
       schema: createUserSchema,
-      preHandler: [app.authenticate],
+      preHandler: [app.authenticate, app.authorize({ accountTypes: ['technical'] })],
     },
     createUser,
   );

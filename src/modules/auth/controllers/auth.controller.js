@@ -9,7 +9,7 @@ import { env } from '../../../config/env.js';
  * @param {import('fastify').FastifyReply} reply
  */
 export async function loginController(request, reply) {
-  const user = await authenticateUser(request.body);
+  const user = await authenticateUser(request.body, request.server.authDatabase);
 
   if (!user) {
     return reply.code(401).send({
@@ -21,12 +21,23 @@ export async function loginController(request, reply) {
 
   const accessToken = generateAccessToken(user, request.server);
 
+  const data = {
+    accessToken,
+    tokenType: 'Bearer',
+    expiresIn: env.auth.jwtExpiresIn,
+  };
+
+  if (user.accountType === 'user') {
+    data.user = {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      role: user.role,
+    };
+  }
+
   return reply.code(200).send({
     status: 'success',
-    data: {
-      accessToken,
-      tokenType: 'Bearer',
-      expiresIn: env.auth.jwtExpiresIn,
-    },
+    data,
   });
 }

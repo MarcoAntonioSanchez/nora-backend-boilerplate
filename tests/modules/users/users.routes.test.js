@@ -42,6 +42,23 @@ const accessToken = app.jwt.sign({
   accountType: 'technical',
 });
 
+// Generate valid access tokens for individual user accounts.
+const adminAccessToken = app.jwt.sign({
+  sub: '1',
+  username: 'raven.admin',
+  displayName: 'Raven',
+  role: 'admin',
+  accountType: 'user',
+});
+
+const patroulerAccessToken = app.jwt.sign({
+  sub: '2',
+  username: 'raven.patrouler',
+  displayName: 'Patrouler',
+  role: 'patrouler',
+  accountType: 'user',
+});
+
 // Mock repository responses to avoid database dependencies.
 mock.method(usersRepository, 'createUserRecord', async (userData) => {
   if (userData.email === 'duplicate@example.com') {
@@ -139,4 +156,38 @@ test('rejects user creation with a duplicate email', async () => {
   assert.equal(response.statusCode, 409);
 
   assert.equal(response.json().message, 'A user with this email already exists.');
+});
+
+// Reject user creation for admin accounts.
+test('rejects user creation from an admin account', async () => {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/users',
+    headers: {
+      authorization: `Bearer ${adminAccessToken}`,
+    },
+    payload: {
+      name: 'Test User',
+      email: 'admin-test@example.com',
+    },
+  });
+
+  assert.equal(response.statusCode, 403);
+});
+
+// Reject user creation for patrouler accounts.
+test('rejects user creation from a patrouler account', async () => {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/users',
+    headers: {
+      authorization: `Bearer ${patroulerAccessToken}`,
+    },
+    payload: {
+      name: 'Test User',
+      email: 'patrouler-test@example.com',
+    },
+  });
+
+  assert.equal(response.statusCode, 403);
 });

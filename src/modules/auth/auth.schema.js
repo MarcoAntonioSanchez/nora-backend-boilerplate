@@ -7,8 +7,9 @@
  */
 export const loginSchema = {
   tags: ['Authentication'],
-  summary: 'Authenticate a technical account.',
-  description: 'Validates technical account credentials and returns a JWT access token.',
+  summary: 'Authenticate an account.',
+  description:
+    'Authenticates a technical account or an individual user account and returns a JWT access token.',
 
   body: {
     type: 'object',
@@ -40,6 +41,21 @@ export const loginSchema = {
             accessToken: { type: 'string' },
             tokenType: { type: 'string', example: 'Bearer' },
             expiresIn: { type: 'string', example: '15m' },
+            user: {
+              type: 'object',
+              description: 'Authenticated user profile. Only present for individual user accounts.',
+              properties: {
+                id: { type: 'integer', example: 1 },
+                username: { type: 'string', example: 'raven.admin' },
+                displayName: { type: 'string', example: 'Raven' },
+                role: {
+                  type: 'string',
+                  enum: ['admin', 'patrouler'],
+                  example: 'admin',
+                },
+              },
+              required: ['id', 'username', 'displayName', 'role'],
+            },
           },
           required: ['accessToken', 'tokenType', 'expiresIn'],
         },

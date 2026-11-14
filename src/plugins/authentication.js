@@ -4,7 +4,7 @@ import fp from 'fastify-plugin';
 import { env } from '../config/env.js';
 
 /**
- * Registers JWT authentication support.
+ * Registers JWT authentication and authorization support.
  *
  * @param {import('fastify').FastifyInstance} app
  */
@@ -28,6 +28,23 @@ async function authenticationPlugin(app) {
         message: 'Authentication required or token is invalid.',
       });
     }
+  });
+
+  // Restrict access according to account types and roles.
+  app.decorate('authorize', function ({ accountTypes, roles } = {}) {
+    return async function (request, reply) {
+      const accountTypeAllowed = !accountTypes || accountTypes.includes(request.user.accountType);
+
+      const roleAllowed = !roles || roles.includes(request.user.role);
+
+      if (!accountTypeAllowed || !roleAllowed) {
+        return reply.code(403).send({
+          statusCode: 403,
+          error: 'Forbidden',
+          message: 'You are not authorized to access this resource.',
+        });
+      }
+    };
   });
 }
 
